@@ -1,6 +1,7 @@
 package com.demo.obspringsecurity.config.security.jwt;
 
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,8 +9,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import java.security.Key;
+import java.security.SignatureException;
 import java.util.Date;
-import java.util.Objects;
 
 /**
  * Métodos para generar y validar token JWT
@@ -20,11 +23,11 @@ public class JwtTokenUtil {
 
     private static final Logger log = LoggerFactory.getLogger(JwtTokenUtil.class);
 
-    @Value("openb")
+    @Value("${jwt.secret}")
     private String jwtSecret;  // clave secreta usada para firmar el token
 
-    @Value("86400000")
-    private int jstExpirationMs; // tiempo de expiración del token (86400000ms = 24hs)
+    @Value("${jwt.expiration}")
+    private int jwtExpirationMs; // tiempo de expiración del token (86400000ms = 24hs)
 
 
     /**
@@ -42,11 +45,14 @@ public class JwtTokenUtil {
 
         UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
 
+        Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+
+        assert userPrincipal != null;
         return Jwts.builder()
-                .setSubject((Objects.requireNonNull(userPrincipal).getUsername()))
-                .setIssuedAt(new Date())
-                .setExpiration(new Date((new Date()).getTime() + jstExpirationMs))
-                .signWith(SignatureAlgorithm.HS512, jwtSecret)
+                .subject(userPrincipal.getUsername())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .signWith(key)
                 .compact();
     }
 
@@ -60,10 +66,13 @@ public class JwtTokenUtil {
      */
     public String getUserNameFromJwtToken(String token){
 
+        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+
         return Jwts.parser()
-                .setSigningKey(jwtSecret)
-                .parseClaimsJws(token)
-                .getBody()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
                 .getSubject();
     }
 
@@ -81,19 +90,16 @@ public class JwtTokenUtil {
 
     public boolean validateJwtToken(String authToken) {
         try {
-            Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
+            SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+
+            Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(authToken);
             return true;
-        } catch (SignatureException e) {
-            log.error("Invalid JWT signature: {}", e.getMessage());
-        } catch (MalformedJwtException e) {
-            log.error("Invalid JWT token: {}", e.getMessage());
-        } catch (ExpiredJwtException e) {
-            log.error("JWT token is expired: {}", e.getMessage());
-        } catch (UnsupportedJwtException e) {
-            log.error("JWT token is unsupported: {}", e.getMessage());
-        } catch (IllegalArgumentException e) {
-            log.error("JWT claims string is empty: {}", e.getMessage());
-        }
-        return false;
+        } catch (JwtException e) {
+            log.error("Invalid JWT: {}", e.getMessage());
+          }
+    return false;
     }
 }

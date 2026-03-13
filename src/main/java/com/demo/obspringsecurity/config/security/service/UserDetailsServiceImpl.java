@@ -3,13 +3,13 @@ package com.demo.obspringsecurity.config.security.service;
 import com.demo.obspringsecurity.repository.UserRepository;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * Autentíca un usuario en la base de datos
@@ -32,6 +32,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 () -> new UsernameNotFoundException("User Not Found with username: " + username)
         );
         // Retorna un UserDetails
-        return new User(user.getUsername(), user.getPassword(), new ArrayList<>());
+        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), Collections.emptyList());
     }
 }
