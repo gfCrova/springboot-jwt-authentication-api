@@ -42,7 +42,7 @@ Este proyecto implementa los siguientes conceptos clave de seguridad en aplicaci
 
 ---
 
-# 🏗️ Arquitectura del proyecto
+<!--# 🏗️ Arquitectura del proyecto
 
 La estructura del proyecto sigue una arquitectura común en aplicaciones **Spring Boot REST**.
 
@@ -74,7 +74,7 @@ src/main/java
     └── MessageResponse
 ```
 
----
+---  -->
 
 # 🔐 Flujo de autenticación
 
