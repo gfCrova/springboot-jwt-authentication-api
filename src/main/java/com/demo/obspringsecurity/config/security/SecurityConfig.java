@@ -140,7 +140,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/v2/api-docs", "/configuration/**", "/swagger*/**", "/webjars/**").permitAll()
-                        .requestMatchers("/api/hello/**").permitAll()
+                        .requestMatchers("/api/hello/**").authenticated()
                         .requestMatchers("/").permitAll()
                         .anyRequest().authenticated()
                 ).authenticationProvider(authenticationProvider()); // registrar proveedor de autenticación
